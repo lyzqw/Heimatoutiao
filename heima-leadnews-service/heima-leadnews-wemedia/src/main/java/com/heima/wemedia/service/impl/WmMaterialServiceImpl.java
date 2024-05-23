@@ -1,9 +1,14 @@
 package com.heima.wemedia.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.heima.file.service.FileStorageService;
+import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
+import com.heima.model.wemedia.dtos.WmMaterialDto;
 import com.heima.model.wemedia.pojos.WmMaterial;
 import com.heima.utils.WmThreadLocalUtil;
 import com.heima.wemedia.mapper.WmMaterialMapper;
@@ -29,7 +34,7 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
     @Override
     public ResponseResult uploadPicture(MultipartFile multipartFile) {
         //check
-        if(multipartFile == null || multipartFile.getSize() == 0){
+        if (multipartFile == null || multipartFile.getSize() == 0) {
             return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         }
         String fileName = UUID.randomUUID().toString().replace("-", "");
@@ -40,8 +45,8 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
         String fileId = null;
         //上传图片到minIO
         try {
-            fileId = fileStorageService.uploadImgFile("",fileName + postfix,multipartFile.getInputStream());
-            log.info("上传图片到MinIO中，fileId:{}",fileId);
+            fileId = fileStorageService.uploadImgFile("", fileName + postfix, multipartFile.getInputStream());
+            log.info("上传图片到MinIO中，fileId:{}", fileId);
         } catch (IOException e) {
             e.printStackTrace();
             log.error("WmMaterialServiceImpl-上传文件失败");
@@ -50,11 +55,34 @@ public class WmMaterialServiceImpl extends ServiceImpl<WmMaterialMapper, WmMater
         WmMaterial wmMaterial = new WmMaterial();
         wmMaterial.setUserId(WmThreadLocalUtil.getUser().getId());
         wmMaterial.setUrl(fileId);
-        wmMaterial.setIsCollection((short)0);
-        wmMaterial.setType((short)0);
+        wmMaterial.setIsCollection((short) 0);
+        wmMaterial.setType((short) 0);
         wmMaterial.setCreatedTime(new Date());
         save(wmMaterial);
         //返回结果
         return ResponseResult.okResult(wmMaterial);
+    }
+
+    @Override
+    public ResponseResult findList(WmMaterialDto dto) {
+        //检查参数
+        dto.checkParam();
+        //分页查询
+        IPage page = new Page(dto.getPage(), dto.getSize());
+        LambdaQueryWrapper<WmMaterial> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        if (dto.getIsCollection() != null && dto.getIsCollection() == 1) {
+            lambdaQueryWrapper.eq(WmMaterial::getIsCollection, dto.getIsCollection());
+        }
+        //按照用户查询
+        lambdaQueryWrapper.eq(WmMaterial::getUserId,WmThreadLocalUtil.getUser().getId());
+        //按照时间倒序
+        lambdaQueryWrapper.orderByDesc(WmMaterial::getCreatedTime);
+        page = page(page, lambdaQueryWrapper);
+
+
+        //结果返回
+        PageResponseResult responseResult = new PageResponseResult(dto.getPage(), dto.getSize(), (int) page.getTotal());
+        responseResult.setData(page.getRecords());
+        return responseResult;
     }
 }
