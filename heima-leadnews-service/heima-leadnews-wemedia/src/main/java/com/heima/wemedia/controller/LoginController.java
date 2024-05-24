@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("/login") //http://localhost:8802/wemedia/MEDIA/wemedia/login/in
 public class LoginController {
 
     @Autowired
