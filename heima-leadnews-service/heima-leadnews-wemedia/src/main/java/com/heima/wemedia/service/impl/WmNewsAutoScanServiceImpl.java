@@ -1,5 +1,6 @@
 package com.heima.wemedia.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.heima.apis.article.IArticleClient;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.common.dtos.ResponseResult;
@@ -16,9 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
 
 
 @Service
@@ -28,6 +29,7 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
 
     @Autowired
     private WmNewsMapper wmNewsMapper;
+
     @Autowired
     private IArticleClient articleClient;
 
@@ -49,9 +51,12 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
         }
 
         //从内容中提取纯文本内容和图片
-
+        Map<String, Object> textAndImages = handleTextAndImages(wmNews);
         //2.审核文本内容  阿里云接口
-
+        boolean isTextScan = handleTextScan((String) textAndImages.get("content"),wmNews);
+        if (!isTextScan){
+            return;
+        }
         //3.审核图片  阿里云接口
 
         //4.审核成功，保存app端的相关的文章数据
@@ -61,6 +66,36 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
         }
         wmNews.setArticleId((Long) responseResult.getData());
         updateWmNews(wmNews, (short) 9, "审核成功");
+    }
+
+    private boolean handleTextScan(String content, WmNews wmNews) {
+        if (content.contains("毒")){
+            updateWmNews(wmNews, (short) 2,"当前文章中存在违规内容");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * //存储纯文本内容
+     * @param wmNews
+     * @return
+     */
+    private Map<String, Object> handleTextAndImages(WmNews wmNews) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (!StringUtils.isEmpty(wmNews.getContent())) {
+            List<Map> maps = JSONArray.parseArray(wmNews.getContent(), Map.class);
+            for (Map map : maps) {
+                if (map.get("type").equals("text")) {
+                    stringBuilder.append(map.get("value"));
+                }
+            }
+        }
+        Map<String, Object> resultMap = new HashMap<>();
+
+        resultMap.put("content", stringBuilder.toString());
+        return resultMap;
     }
 
     private ResponseResult saveAppArticle(WmNews wmNews) {
