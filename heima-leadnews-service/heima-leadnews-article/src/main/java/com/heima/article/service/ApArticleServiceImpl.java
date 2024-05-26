@@ -41,22 +41,26 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
     @Autowired
     private ApArticleContentMapper apArticleContentMapper;
 
+    @Autowired
+    private ArticleFreemarkerService articleFreemarkerService;
+
 
     /**
-     *  保存app端相关文章
-      * @param dto
+     * 保存app端相关文章
+     *
+     * @param dto
      * @return
      */
     @Override
     public ResponseResult saveArticle(ArticleDto dto) {
         //1.检查参数
-          if(dto == null){
-              return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
-          }
+        if (dto == null) {
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
         ApArticle apArticle = new ApArticle();
-        BeanUtils.copyProperties(dto,apArticle);
+        BeanUtils.copyProperties(dto, apArticle);
         //2.判断是否存在id
-        if (dto.getId() == null){
+        if (dto.getId() == null) {
             //2.1 不存在id  保存  文章  文章配置  文章内容
             save(apArticle);
             ApArticleConfig apArticleConfig = new ApArticleConfig(apArticle.getId());
@@ -66,15 +70,16 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
             apArticleContent.setArticleId(apArticle.getId());
             apArticleContent.setContent(dto.getContent());
             apArticleContentMapper.insert(apArticleContent);
-        }else{
+        } else {
             //2.2 存在id   修改  文章  文章内容
             updateById(apArticle);
-            ApArticleContent apArticleContent = apArticleContentMapper.selectOne(Wrappers.<ApArticleContent>lambdaQuery().eq(ApArticleContent::getArticleId,dto.getId()));
+            ApArticleContent apArticleContent = apArticleContentMapper.selectOne(Wrappers.<ApArticleContent>lambdaQuery().eq(ApArticleContent::getArticleId, dto.getId()));
             apArticleContent.setContent(dto.getContent());
 
             apArticleContentMapper.updateById(apArticleContent);
         }
 
+        articleFreemarkerService.buildArticleToMinIO(apArticle, dto.getContent());
 
         return ResponseResult.okResult(apArticle.getId());
     }

@@ -1,14 +1,18 @@
 package com.heima.wemedia.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.apis.article.IArticleClient;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.wemedia.pojos.WmChannel;
 import com.heima.model.wemedia.pojos.WmNews;
+import com.heima.model.wemedia.pojos.WmSensitive;
 import com.heima.model.wemedia.pojos.WmUser;
+import com.heima.user.utils.common.SensitiveWordUtil;
 import com.heima.wemedia.mapper.WmChannelMapper;
 import com.heima.wemedia.mapper.WmNewsMapper;
+import com.heima.wemedia.mapper.WmSensitiveMapper;
 import com.heima.wemedia.mapper.WmUserMapper;
 import com.heima.wemedia.service.WmNewsAutoScanService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -39,19 +44,28 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
     @Autowired
     private WmUserMapper wmUserMapper;
 
+    @Autowired
+    private WmSensitiveMapper wmSensitiveMapper;
+
     @Override
     @Async
     public void autoScanWmNews(Integer id) {
         WmNews wmNews = wmNewsMapper.selectById(id);
         if (wmNews == null) {
+            System.out.println("找不到文章");
             throw new RuntimeException("WmNewsAutoScanServiceImpl-文章不存在");
         }
         if (!Objects.equals(wmNews.getStatus(), WmNews.Status.SUBMIT.getCode())) {
             return;
         }
 
+
         //从内容中提取纯文本内容和图片
         Map<String, Object> textAndImages = handleTextAndImages(wmNews);
+
+        boolean isSensitive = handleSensitiveScan((String) textAndImages.get("content"), wmNews);
+        if(!isSensitive) return;
+
         //2.审核文本内容  阿里云接口
         boolean isTextScan = handleTextScan((String) textAndImages.get("content"),wmNews);
         if (!isTextScan){
@@ -62,10 +76,23 @@ public class WmNewsAutoScanServiceImpl implements WmNewsAutoScanService {
         //4.审核成功，保存app端的相关的文章数据
         ResponseResult responseResult = saveAppArticle(wmNews);
         if (responseResult.getCode() != 200) {
+            System.out.println("不是200: "+responseResult.getCode());
             throw new RuntimeException("WmNewsAutoScanServiceImpl-文章审核，保存app端相关文章数据失败");
         }
         wmNews.setArticleId((Long) responseResult.getData());
         updateWmNews(wmNews, (short) 9, "审核成功");
+    }
+
+    private boolean handleSensitiveScan(String content, WmNews wmNews) {
+        List<WmSensitive> list = wmSensitiveMapper.selectList(Wrappers.<WmSensitive>lambdaQuery().select(WmSensitive::getSensitives));
+
+        SensitiveWordUtil.initMap(list.stream().map(WmSensitive::getSensitives).collect(Collectors.toList()));
+        Map<String, Integer> map  = SensitiveWordUtil.matchWords(content);
+        if(!map.isEmpty()){
+            updateWmNews(wmNews,(short) 2,"当前文章中存在违规内容"+map);
+            return true;
+        }
+        return true;
     }
 
     private boolean handleTextScan(String content, WmNews wmNews) {
