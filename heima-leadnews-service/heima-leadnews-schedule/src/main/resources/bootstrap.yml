@@ -1,5 +1,6 @@
 server:
   port: 51701
+#  启动2台服务器
 spring:
   application:
     name: leadnews-schedule

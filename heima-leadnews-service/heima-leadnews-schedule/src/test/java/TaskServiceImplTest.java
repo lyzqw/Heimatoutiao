@@ -20,17 +20,16 @@ public class TaskServiceImplTest {
     @Test
     public void addTask() {
 //        添加zset任务的Task: {"executeTime":1716738874262,"parameters":"dGFzazIyMjY2ODg=","priority":20,"taskId":1794758032551436290,"taskType":10}
-//        for (int i = 0; i < 5; i++) {
-        Task task = new Task();
-        task.setTaskType(10);
-        task.setPriority(20);
-        task.setParameters("task2226688".getBytes());
-//        task.setExecuteTime(new Date().getTime() + TimeUnit.MINUTES.toMillis(4));
-        task.setExecuteTime(new Date().getTime());
-
-        long taskId = taskService.addTask(task);
-        System.out.println(taskId);
-//        }
+        for (int i = 0; i < 5; i++) {
+            Task task = new Task();
+            task.setTaskType(100+i);
+            task.setPriority(50);
+            task.setParameters("task test111".getBytes());
+            task.setExecuteTime(new Date().getTime() + 50000*i);
+//        task.setExecuteTime(new Date().getTime());
+            long taskId = taskService.addTask(task);
+            System.out.println(taskId);
+        }
     }
 
     @Test

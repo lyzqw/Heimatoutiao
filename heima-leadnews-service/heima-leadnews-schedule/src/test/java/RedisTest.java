@@ -1,4 +1,5 @@
 import com.alibaba.fastjson.JSON;
+import com.heima.common.constants.ScheduleConstants;
 import com.heima.common.redis.CacheService;
 import com.heima.model.schedule.dtos.Task;
 import com.heima.schedule.ScheduleApplication;
@@ -12,6 +13,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,7 @@ public class RedisTest {
         Set<String> keys = cacheService.keys("future_*");
         System.out.println(keys);
 
+//        scan耗时少
         Set<String> scan = cacheService.scan("future_*");
         System.out.println(scan);
     }
@@ -92,6 +95,7 @@ public class RedisTest {
                 return null;
             }
         });
+//        490毫秒
         System.out.println("使用管道技术执行10000次自增操作共耗时:"+(System.currentTimeMillis()-start)+"毫秒");
     }
 }

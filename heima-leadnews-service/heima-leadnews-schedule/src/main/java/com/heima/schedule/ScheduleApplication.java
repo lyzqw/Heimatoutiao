@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @MapperScan("com.heima.schedule.mapper")
-@EnableScheduling
+@EnableScheduling //开启定时任务
 public class ScheduleApplication {
 
     public static void main(String[] args) {

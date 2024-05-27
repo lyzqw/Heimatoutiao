@@ -1,6 +1,7 @@
 package com.heima.schedule.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.common.constants.ScheduleConstants;
 import com.heima.common.redis.CacheService;
 import com.heima.model.schedule.dtos.Task;
@@ -12,12 +13,16 @@ import com.heima.schedule.service.TaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.annotation.PostConstruct;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -145,5 +150,49 @@ public class TaskServiceImpl implements TaskService {
             log.error("poll task exception");
         }
         return task;
+    }
+
+    @Scheduled(cron = "0 */1 * * * ?")
+    public void refresh() {
+        String token = cacheService.tryLock("FUTURE_TASK_SYNC", 1000 * 30);
+        if (StringUtils.isNotEmpty(token)) {
+            System.out.println(System.currentTimeMillis() / 1000 + "执行了定时任务");
+            Set<String> futureKeys = cacheService.scan(ScheduleConstants.FUTURE + "*");
+            for (String futureKey : futureKeys) {
+                String topicKey = ScheduleConstants.TOPIC + futureKey.split(ScheduleConstants.FUTURE)[1];
+                //获取该组key下当前需要消费的任务数据
+                //按照分值获取数据
+                Set<String> tasks = cacheService.zRangeByScore(futureKey, 0, System.currentTimeMillis());
+                if (!tasks.isEmpty()) {
+                    cacheService.refreshWithPipeline(futureKey, topicKey, tasks);
+                    System.out.println("成功的将" + futureKey + "下的当前需要执行的任务数据刷新到" + topicKey + "下");
+                }
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 */5 * * * ?")
+    @PostConstruct//开机服务器执行一下这个方法
+    public void reload() {
+        clearCache();
+        log.info("数据库数据同步到缓存");
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, 5);
+        List<Taskinfo> allTasks = taskinfoMapper.selectList(Wrappers.<Taskinfo>lambdaQuery().lt(Taskinfo::getExecuteTime, calendar.getTime()));
+        if (allTasks != null && allTasks.size() > 0) {
+            for (Taskinfo allTask : allTasks) {
+                Task task = new Task();
+                BeanUtils.copyProperties(allTask, task);
+                task.setExecuteTime(allTask.getExecuteTime().getTime());
+                addTaskToCache(task);
+            }
+        }
+    }
+
+    private void clearCache() {
+        Set<String> topickeys = cacheService.scan(ScheduleConstants.TOPIC + "*");
+        Set<String> futurekeys = cacheService.scan(ScheduleConstants.FUTURE + "*");
+        cacheService.delete(futurekeys);
+        cacheService.delete(topickeys);
     }
 }
