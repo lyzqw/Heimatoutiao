@@ -47,7 +47,6 @@ public class ApArticleTest {
 
         }
         restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
-
     }
 
     @Test
