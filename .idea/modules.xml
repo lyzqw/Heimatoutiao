@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/heima-leadnews-service/heima-leadnews-search/heima-leadnews-search.iml" filepath="$PROJECT_DIR$/heima-leadnews-service/heima-leadnews-search/heima-leadnews-search.iml" />
       <module fileurl="file://$PROJECT_DIR$/heima-leadnews-service/heima-leadnews-service.iml" filepath="$PROJECT_DIR$/heima-leadnews-service/heima-leadnews-service.iml" />
       <module fileurl="file://$PROJECT_DIR$/heima-leadnews-utils/heima-leadnews-utils.iml" filepath="$PROJECT_DIR$/heima-leadnews-utils/heima-leadnews-utils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/heima-leadnews-test/mongo-demo/mongo-demo.iml" filepath="$PROJECT_DIR$/heima-leadnews-test/mongo-demo/mongo-demo.iml" />
     </modules>
   </component>
 </project>

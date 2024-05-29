@@ -14,6 +14,7 @@
         <module>kafka-dome</module>
         <module>es-init</module>
         <module>mongo-demo</module>
+        <module>xxl-job-dome</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 

@@ -11,6 +11,7 @@
         <module name="heima-file-starter" />
         <module name="minio-demo" />
         <module name="heima-leadnews-wemedia-gateway" />
+        <module name="xxl-job-dome" />
         <module name="heima-leadnews-wemedia" />
         <module name="heima-leadnews-feign-api" />
         <module name="heima-leadnews-user" />
@@ -55,6 +56,7 @@
       <module name="kafka-dome" options="-parameters" />
       <module name="minio-demo" options="-parameters" />
       <module name="mongo-demo" options="-parameters" />
+      <module name="xxl-job-dome" options="-parameters" />
     </option>
   </component>
 </project>
