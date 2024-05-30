@@ -1,10 +1,12 @@
 package com.heima.kafka.sample;
 
-import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Properties;
 
-public class ProducerQuickStart {
+public class StreamProducerQuickStart {
 
 //    //发送一个条消息
     public static void main(String[] args) {
@@ -23,10 +25,13 @@ public class ProducerQuickStart {
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
         //封装发送的消息
-        ProducerRecord<String, String> record = new ProducerRecord<String, String>("itheima-topic", "100001", "hello kafka22");
+        for (int i = 0; i < 5; i++) {
+//            //封装发送的消息
+            ProducerRecord<String, String> record = new ProducerRecord<String, String>("itcast-topic-input", "hello kafka");
+            //3.发送消息
+            producer.send(record);
+        }
 
-        //3.发送消息
-        producer.send(record);
         System.out.println("4.关闭消息通道，必须关闭，否则消息发送不成功");
         //4.关闭消息通道，必须关闭，否则消息发送不成功
         producer.close();
