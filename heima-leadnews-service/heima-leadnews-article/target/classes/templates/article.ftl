@@ -176,7 +176,7 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <#--<script src="../../../plugins/js/axios.min.js"></script>-->
 <!-- 页面逻辑 -->
-<script src="../../../plugins/js/index.js"></script>
+<#--<script src="../../../plugins/js/index.js"></script>-->
 </body>
 
 </html>
