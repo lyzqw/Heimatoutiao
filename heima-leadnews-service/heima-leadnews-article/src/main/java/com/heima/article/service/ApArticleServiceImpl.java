@@ -1,12 +1,16 @@
 package com.heima.article.service;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.article.mapper.*;
+import com.heima.common.ArticleConstants;
+import com.heima.common.redis.CacheService;
 import com.heima.model.article.dtos.ArticleDto;
 import com.heima.model.article.dtos.ArticleHomeDto;
 import com.heima.model.article.pojos.ApArticle;
 import com.heima.model.article.pojos.ApArticleConfig;
 import com.heima.model.article.pojos.ApArticleContent;
+import com.heima.model.article.vos.HotArticleVo;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +29,9 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
 
     @Autowired
     private ApArticleMapper apArticleMapper;
+    @Autowired
+    private CacheService cacheService;
+
 
     @Override
     public ResponseResult load(ArticleHomeDto dto, Short loadtype) {
@@ -32,6 +39,19 @@ public class ApArticleServiceImpl extends ServiceImpl<ApArticleMapper, ApArticle
         List<ApArticle> apArticles = apArticleMapper.loadArticleList(dto, loadtype);
         ResponseResult responseResult = ResponseResult.okResult(apArticles);
         return responseResult;
+    }
+
+    @Override
+    public ResponseResult load2(ArticleHomeDto dto, Short loadtype,boolean firstPage) {
+        if (firstPage){
+            String jsonStr = cacheService.get(ArticleConstants.HOT_ARTICLE_FIRST_PAGE + dto.getTag());
+            if (jsonStr.isEmpty()){
+                List<HotArticleVo> hotArticleVoList = JSON.parseArray(jsonStr, HotArticleVo.class);
+                ResponseResult responseResult = ResponseResult.okResult(hotArticleVoList);
+                return responseResult;
+            }
+        }
+        return load(dto, loadtype);
     }
 
 
