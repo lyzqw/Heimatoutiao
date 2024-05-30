@@ -25,9 +25,9 @@ public class StreamProducerQuickStart {
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
         //封装发送的消息
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
 //            //封装发送的消息
-            ProducerRecord<String, String> record = new ProducerRecord<String, String>("itcast-topic-input", "hello kafka");
+            ProducerRecord<String, String> record = new ProducerRecord<String, String>("itcast-topic-input", "liuyuzhe wq");
             //3.发送消息
             producer.send(record);
         }
